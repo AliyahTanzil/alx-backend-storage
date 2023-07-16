@@ -1,8 +1,9 @@
--- Import the table dump
-SOURCE metal_bands.sql.zip;
--- Rank country origins of bands by the number of fans
+-- A SQL script that ranks country origins of bands, ordered by 
+-- the number of (non-unique) fans
+-- Column names must be: origin and nb_fans
+-- My script can be executed on any database
 SELECT origin,
     SUM(fans) AS nb_fans
-FROM bands
+FROM metal_bands
 GROUP BY origin
 ORDER BY nb_fans DESC;

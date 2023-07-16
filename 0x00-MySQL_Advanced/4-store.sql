@@ -1,10 +1,10 @@
 -- Create a trigger named after_order
-CREATE TRIGGER after_order -- The trigger should be activated after inserting a new row in the orders table
+-- A SQL script that lists all bands with Glam rock as their main style, ranked by their longevity
+-- 
+-- Initial
+CREATE TRIGGER decrease_items_quantity
 AFTER
-INSERT ON orders -- The trigger should apply to each new row
-    FOR EACH ROW -- The trigger should execute the following statement
-    BEGIN -- Decrease the quantity of the item by the number of units ordered
+INSERT ON orders FOR EACH ROW
 UPDATE items
-SET quantity = quantity - NEW.number_of_units -- Where the item id matches the one in the new order
-WHERE id = NEW.item_id;
-END;
+SET quantity = quantity - NEW.number
+WHERE name = NEW.item_name;
