@@ -1,27 +1,30 @@
--- SQL script to create a stored procedure to compute and store the average score for a student
-
--- Description: This stored procedure takes a user_id as input and calculates the average score for the corresponding student.
-
--- Drop the stored procedure if it already exists
-DROP PROCEDURE IF EXISTS ComputeAverageScoreForUser$$
-
--- Create the stored procedure
+-- This stored procedure computes and stores the average score for a student
+-- Input: user_id - a users.id value (assumed to be linked to an existing user)
 DELIMITER $$
-CREATE PROCEDURE ComputeAverageScoreForUser(IN p_user_id INT)
+
+CREATE PROCEDURE ComputeAverageScoreForUser(IN user_id INT)
 BEGIN
-    DECLARE avg_score DECIMAL(10, 2);
+  -- Declare variables
+  DECLARE total_score DECIMAL(10,2);
+  DECLARE num_scores INT;
 
-    -- Calculate the average score for the given user_id
-    SELECT AVG(score) INTO avg_score
-    FROM scores
-    WHERE user_id = p_user_id;
+  -- Compute the total score and the number of scores for the user
+  SELECT SUM(score), COUNT(*) INTO total_score, num_scores
+  FROM scores
+  WHERE user_id = user_id;
 
-    -- Insert or update the average score for the user
-    INSERT INTO average_scores (user_id, average_score)
-    VALUES (p_user_id, avg_score)
-    ON DUPLICATE KEY UPDATE average_score = avg_score;
+  -- Calculate the average score
+  DECLARE average_score DECIMAL(10,2);
+  IF num_scores > 0 THEN
+    SET average_score = total_score / num_scores;
+  ELSE
+    SET average_score = 0;
+  END IF;
 
-    -- Optionally, you can return the average score as output
-    SELECT avg_score AS average_score;
+  -- Store the average score for the user
+  UPDATE users
+  SET average_score = average_score
+  WHERE id = user_id;
 END $$
+
 DELIMITER ;
