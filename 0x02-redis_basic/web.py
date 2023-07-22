@@ -14,35 +14,41 @@ an expiration time of 10 seconds.
 Tip: Use http://slowwly.robertomurray.co.uk to simulate
 a slow response and test your caching."""
 
-import requests
+
 import redis
-import time
+import requests
 from functools import wraps
 
-# Initialize Redis client
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+r = redis.Redis()
 
-def cache_with_expiration(expiration_time: int):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            key = f"{func.__name__}:{args}:{kwargs}"
-            cached_result = redis_client.get(key)
-            if cached_result:
-                return cached_result.decode('utf-8')
 
-            result = func(*args, **kwargs)
-            redis_client.setex(key, expiration_time, result)
-            return result
-        return wrapper
-    return decorator
+def url_access_count(method):
+    """decorator for get_page function"""
+    @wraps(method)
+    def wrapper(url):
+        """wrapper function"""
+        key = "cached:" + url
+        cached_value = r.get(key)
+        if cached_value:
+            return cached_value.decode("utf-8")
 
-@cache_with_expiration(10)
+            # Get new content and update cache
+        key_count = "count:" + url
+        html_content = method(url)
+
+        r.incr(key_count)
+        r.set(key, html_content, ex=10)
+        r.expire(key, 10)
+        return html_content
+    return wrapper
+
+
+@url_access_count
 def get_page(url: str) -> str:
-    # Fetch the HTML content from the URL
-    response = requests.get(url)
-    return response.text
+    """obtain the HTML content of a particular"""
+    results = requests.get(url)
+    return results.text
 
-# Usage
-html_content = get_page("http://slowwly.robertomurray.co.uk/delay/1000/url/https://www.example.com")
-print(html_content)
+
+if __name__ == "__main__":
+    get_page('http://slowwly.robertomurray.co.uk')
